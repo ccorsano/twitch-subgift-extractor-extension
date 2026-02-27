@@ -1,0 +1,45 @@
+{
+    "manifest_version": 3,
+    "name": "twitch-subgift-extractor",
+    "description": "Get a link to the moment you were subgifted",
+    "version": "0.0.1",
+    "icons": {
+        "64": "icons/icon.png"
+    },
+    "background": {
+        "scripts": [
+            "background.js"
+        ]
+    },
+    "permissions": [
+        "webRequest", "webRequestBlocking", "webRequestFilterResponse"
+    ],
+    "host_permissions": [
+        "https://gql.twitch.tv/gql"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.twitch.tv/*",
+                "https://*.twitch.tv/"
+            ],
+            "js": [
+                "content_script.js"
+            ]
+        }
+    ],
+    "browser_action": {
+        "default_icon": {
+            "64": "icons/icon.png"
+        },
+        "default_popup": "browserAction/index.html",
+        "default_title": "twitch-subgift-extractor"
+    },
+    "page_action": {
+        "default_icon": {
+            "64": "icons/icon.png"
+        },
+        "default_popup": "pageAction/index.html",
+        "default_title": "twitch-subgift-extractor"
+    }
+}
