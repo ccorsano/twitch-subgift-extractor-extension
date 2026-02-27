@@ -20,15 +20,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Timestamp:", new Date(data.timeStamp).toLocaleString());
     console.groupEnd();
 
-    gqlResponse = data.body
-    edges = gqlResponse[1].data.currentUser.notifications.edges
+    data.body.forEach(gdlItem => {
+      edges = gdlItem.data?.currentUser?.notifications?.edges
 
-    edges.filter(e => e.node.type == "sub_gift_received").forEach(notification => {
-      subgiftDate = notification.node.updatedAt
-      channelId = notification.node.extra.id
+      if (!edges) return;
 
-      console.log(subgiftDate)
-      console.log(channelId)
+      edges.filter(e => e.node.type == "sub_gift_received").forEach(notification => {
+        subgiftDate = notification.node.updatedAt
+        channelId = notification.node.extra.id
+
+        console.log(subgiftDate)
+        console.log(channelId)
+      })
     })
   }
 

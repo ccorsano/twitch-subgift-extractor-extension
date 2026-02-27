@@ -78,9 +78,6 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
 // Capture requests before they are sent
 browser.webRequest.onCompleted.addListener(
   (details) => {
-    console.warn("onCompleted triggered " + details.requestId);
-    console.warn(notificationRequests)
-
     if (!notificationRequests.includes(details.requestId)) return;
     notificationRequests = notificationRequests.filter((rid) => rid != details.requestId)
 
