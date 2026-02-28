@@ -30,8 +30,6 @@ let testPermissions = {
 const testResult = browser.permissions.contains(testPermissions).then(testResult => console.warn(testResult) )
 
 browser.webRequest.onBeforeRequest.addListener(async (details) => {
-    console.warn("onBeforeRequest " + details.requestId);
-
     requestText = new TextDecoder().decode(details.requestBody.raw[0].bytes)
     requestJson = JSON.parse(requestText)
 
@@ -40,34 +38,35 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
       notificationRequests.push(details.requestId)
       console.warn(notificationRequests)
       responseFilter = browser.webRequest.filterResponseData(details.requestId);
+      responseFilter.onstop = (event) => {
+        responseFilter.close()
+      }
       responseFilter.ondata = (event) => {
         let decoder = new TextDecoder("utf-8");
         const rawString = decoder.decode(event.data);
         try {
           parsedBody = JSON.parse(rawString);
-        } catch (_) {
-          parsedBody = rawString; // fallback to plain text
+
+          // Build a lightweight payload that we’ll forward
+          const payload = {
+            tabId: details.tabId,
+            url: details.url,
+            method: details.method,
+            headers: details.requestHeaders || [],
+            body: parsedBody,
+            requestId: details.requestId,
+            timeStamp: details.timeStamp
+          };
+
+          // Send it to the content script that owns the tab
+          browser.tabs.sendMessage(details.tabId, {type: "REQUEST_FULFILLED", payload})
+            .catch(err => {
+              // The tab might not have a content script yet, or it might have been closed.
+              console.warn("Could not forward request to content script:", err);
+            });
+        } finally {
+          responseFilter.write(event.data);
         }
-        
-        responseFilter.write(event.data);
-
-        // Build a lightweight payload that we’ll forward
-        const payload = {
-          tabId: details.tabId,
-          url: details.url,
-          method: details.method,
-          headers: details.requestHeaders || [],
-          body: parsedBody,
-          requestId: details.requestId,
-          timeStamp: details.timeStamp
-        };
-
-        // Send it to the content script that owns the tab
-        browser.tabs.sendMessage(details.tabId, {type: "REQUEST_FULFILLED", payload})
-          .catch(err => {
-            // The tab might not have a content script yet, or it might have been closed.
-            console.warn("Could not forward request to content script:", err);
-          });
       };
     }
   },
