@@ -19,8 +19,6 @@ const filter = {
   types: ["xmlhttprequest", "fetch"] // or just "xmlhttprequest" if you only care about XHR
 };
 
-var notificationRequests = []
-
 console.warn("Background script loading");
 
 let testPermissions = {
@@ -35,8 +33,6 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
 
     if (requestJson.some(query => query.operationName == "OnsiteNotifications_ListNotifications"))
     {
-      notificationRequests.push(details.requestId)
-      console.warn(notificationRequests)
       responseFilter = browser.webRequest.filterResponseData(details.requestId);
       responseFilter.onstop = (event) => {
         responseFilter.close()
