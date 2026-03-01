@@ -187,7 +187,6 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
 
           requestHeaders = pendingRequests[details.requestId].headers;
 
-          console.debug(rawString)
           parsedBody = JSON.parse(rawString);
 
           clientId = getHeaderValue(requestHeaders, "Client-Id");
@@ -196,16 +195,18 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
           var subgifts = extractSubgiftEvent(parsedBody);
 
           subgiftUrls = subgifts.map(async subgift => {
-            console.log("Fetch past broadcast " + subgift.channelName)
+            console.log("Fetch past broadcasts " + subgift.channelName)
             const pastBroadcasts = await fetchPastBroadcasts(clientId, authorization, subgift.channelName)
             
             console.log("Found " + pastBroadcasts[0].data.user.videos.edges.length + " broadcasts")
             const subgiftBroadcast = getBroadcastForTimestamp(pastBroadcasts, subgift.timeStamp)
-            var subgiftUrl = subgift.channelUrl
+            let subgiftUrl = subgift.channelUrl
+            let broadcastAvailable = false 
             if (subgiftBroadcast)
             {
               const secondsInStream = (new Date(subgift.timeStamp) - subgiftBroadcast.start) / 1000;
               subgiftUrl = "https://www.twitch.tv/videos/" + subgiftBroadcast.id + "?t=" + formatDurationForVideoUrl(secondsInStream);
+              broadcastAvailable = true
             }
 
             return {
@@ -214,6 +215,7 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
               channelName: subgift.channelName,
               subgiftTime: subgift.timeStamp,
               url: subgiftUrl,
+              hasBroadcast: broadcastAvailable,
               description: subgift.body
             }
           })

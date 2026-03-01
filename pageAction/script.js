@@ -21,17 +21,26 @@ function createSubgiftElementIfNotExist(subgift)
 {
     listContainer = document.getElementById("subgifts");
 
-    if (document.getElementById(subgift.id)) return;
-    
+    if (document.getElementById(subgift.notificationId)) return;
+
     subgiftItem = document.createElement("li");
-    subgiftItem.id = subgift.id
+    subgiftItem.id = subgift.notificationId
     listContainer.appendChild(subgiftItem);
     container = document.createElement("div");
     subgiftItem.appendChild(container);
     link = document.createElement("a")
-    container.appendChild(link)
     link.setAttribute("href", subgift.url)
-    link.appendChild(document.createTextNode(subgift.description))
+    let description = document.createTextNode(subgift.description)
+
+    if (subgift.hasBroadcast)
+    {
+        link.appendChild(description)
+        container.appendChild(link)
+    }
+    else
+    {
+        container.appendChild(description)
+    }
 }
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
