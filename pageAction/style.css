@@ -1,3 +1,103 @@
 h1 {
-  font-style: italic;
+  font-size: 1.4em;
+}
+
+body {
+  background-color: #3b3b44;
+  color: #efeff1;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-right: 0;
+  font-family: sans-serif;
+}
+
+div#header {
+  width: 100%;
+  display: table;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+div#title {
+  display: table-cell;
+  width: auto;
+  align-content: center;
+}
+
+div#actions {
+  display: table-cell;
+  width: fit-content;
+  align-content: center;
+}
+
+a {
+  color: #efeff1;
+}
+
+a:hover {
+  color: #efeff1;
+}
+
+a:visited {
+  color: #efeff1;
+}
+
+a:active {
+  color: #efeff1;
+}
+
+ul#subgifts {
+  list-style-type: none;
+  list-style-position: outside;
+  padding: 0;
+  margin: 0;
+}
+
+li.subgift-item {
+  width: 100%;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  min-height: 64px;
+  display: table;
+}
+
+li.withlink {
+  cursor: pointer;
+}
+
+.withlink a {
+  text-decoration: none;
+}
+
+.gotohint {
+  font-size: smaller;
+}
+
+div.thumbnail-box {
+  display: table-cell;
+  width: 4.6rem;
+}
+
+img.thumbnail {
+  height: 4.6rem;
+  width: 4.6rem;
+  border-width: medium;
+  border-style: none;
+  border-image-outset: 0;
+  border-image-repeat: stretch;
+  border-image-slice: 100%;
+  border-image-source: none;
+  border-image-width: 1;
+}
+
+div.text-box {
+  padding-left: 0.5em;
+  display: table-cell;
+  height: 100%;
+  vertical-align: middle;
+}
+
+li.withlink:hover {
+  background-color: rgba(83, 83, 95, 0.48);
 }

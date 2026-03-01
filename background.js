@@ -54,6 +54,7 @@ function extractSubgiftEvent(parsedBody)
       channelId = notification.node.extra.id;
       url = notification.node.actions[0].url;
       description = notification.node.body;
+      thumbnailURL = notification.node.thumbnailURL;
       const urlSegments = url.split("/");
       channelName = urlSegments[urlSegments.length-1];
 
@@ -63,7 +64,8 @@ function extractSubgiftEvent(parsedBody)
         channelId: channelId,
         channelUrl: url,
         channelName: channelName,
-        body: description
+        body: description,
+        thumbnailURL: thumbnailURL
       }
     })
 
@@ -216,7 +218,8 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
               subgiftTime: subgift.timeStamp,
               url: subgiftUrl,
               hasBroadcast: broadcastAvailable,
-              description: subgift.body
+              description: subgift.body,
+              thumbnailURL: subgift.thumbnailURL
             }
           })
 
@@ -245,7 +248,7 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
               headers: details.requestHeaders || [],
               body: resolvedSubgifts,
               requestId: details.requestId,
-              timeStamp: details.timeStamp
+              timeStamp: details.timeStamp,
             };
 
             // Send it to the content script that owns the tab

@@ -5,11 +5,53 @@
     <link href="style.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>Subgifts</h1>
-    <a href="#" onclick="refreshSubgifts()">Refresh</a>
+    <div id="header">
+      <div id="title">
+        <h1>Subgifts</h1>
+      </div>
+      <div id="actions">
+        <a href="#" onclick="refreshSubgifts()">
+          Refresh
+        </a>
+      </div>
+    </div>
     <ul id="subgifts">
-      <li>No subgifts resolved. <br/>Open your Twitch notifications until you see your subgift to load them.</li>
     </ul>
+    <template id="subgift-item-withlink">
+      <li class="subgift-item withlink">
+        <div class="thumbnail-box">
+          <img class="thumbnail" src=""/>
+        </div>
+        <div class="text-box">
+          <a href="#" title="Go to subgift in video">
+            <div class="description"></div>
+            <div class="gotohint">Go to broadcast</div>
+          </a>
+        </div>
+      </li>
+    </template>
+    <template id="subgift-item-nolink">
+      <li class="subgift-item nolink">
+        <div class="thumbnail-box">
+          <img class="thumbnail" src=""/>
+        </div>
+        <div class="text-box">
+          <div class="description"></div>
+            <div class="gotohint">Broadcast not found</div>
+        </div>
+      </li>
+    </template>
+    <template id="subgift-item-refreshing">
+      <li class="subgift-item placeholder">
+        <div class="description">Refreshing...</div>
+      </li>
+    </template>
+    <template id="subgift-item-empty">
+      <li class="subgift-item placeholder">
+        <div class="description">No subgifts resolved.</div>
+        <div class="gotohint">Open your Twitch notifications until you see your subgift to load them.</div>
+      </li>
+    </template>
     <script src="script.js"></script>
   </body>
 </html>
