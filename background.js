@@ -21,7 +21,24 @@ const filter = {
 
 console.warn("Background script loading");
 
-var pendingRequests = {}
+let pendingRequests = {}
+let AllResolvedSubgifts = []
+
+function formatDurationForVideoUrl(seconds)
+{
+  n = Number(seconds)
+  var days  = Math.floor(n / (24*3600));
+  var hours = Math.floor((n % (24*3600))/3600);
+  var mins  = Math.floor((n % 3600)/60);
+  var secs  = Math.floor(seconds % 60);
+
+  var dStr = days > 0 ? days + "d" : "";
+  var hStr = hours > 0 ? hours + "h" : "";
+  var mStr = mins > 0 ? mins + "m" : "";
+  var sStr = secs > 0 ? secs + "s" : "";
+
+  return dStr + hStr + mStr + sStr;
+}
 
 function extractSubgiftEvent(parsedBody)
 {
@@ -35,17 +52,20 @@ function extractSubgiftEvent(parsedBody)
     filteredEdges = edges.filter(e => e.node.type == "sub_gift_received")
 
     subgifts = filteredEdges.map(notification => {
-      subgiftDate = notification.node.updatedAt
-      channelId = notification.node.extra.id
-      url = notification.node.actions[0].url
-      const urlSegments = url.split("/")
-      channelName = urlSegments[urlSegments.length-1]
+      subgiftDate = notification.node.updatedAt;
+      channelId = notification.node.extra.id;
+      url = notification.node.actions[0].url;
+      description = notification.node.body;
+      const urlSegments = url.split("/");
+      channelName = urlSegments[urlSegments.length-1];
 
       return {
+        id: notification.node.id,
         timeStamp: subgiftDate,
         channelId: channelId,
         channelUrl: url,
-        channelName: channelName
+        channelName: channelName,
+        body: description
       }
     })
 
@@ -53,10 +73,55 @@ function extractSubgiftEvent(parsedBody)
   }).flat()
 }
 
+function replaceUrlsInSubgiftEvents(eventsData, subgiftsUrls)
+{
+  eventsData.forEach(gqlItem => {
+    edges = gqlItem.data?.currentUser?.notifications?.edges
+    if (!edges) return;
+    filteredEdges = edges.filter(e => e.node.type == "sub_gift_received")
+
+    filteredEdges.forEach(notification => {
+      subgiftUrl = subgiftsUrls.find(s => s.id == notification.id)
+      console.log(notification)
+      console.log(subgiftUrl)
+      if(!subgiftUrl) return;
+
+      notification.node.actions[0].url = subgiftUrl.url
+
+      console.log(notification)
+    })
+  });
+}
+
+function getBroadcastForTimestamp(broadcastsResult, timestamp)
+{
+  const broadcasts = broadcastsResult[0].data.user.videos.edges.map(e => e.node)
+  const giftDate = new Date(timestamp)
+
+  timings = broadcasts.map(b => {
+    const publishedAt = new Date(b.publishedAt)
+    const streamEnd = new Date(publishedAt.getTime() + b.lengthSeconds * 1000)
+    
+    return {
+      id: b.id,
+      start: publishedAt,
+      end: streamEnd,
+      hasSubgift: publishedAt < giftDate && streamEnd >  giftDate,
+      details: b
+    }
+  })
+
+  const matchedBroadcast = timings.find(b => b.hasSubgift)
+  if (matchedBroadcast)
+  {
+    return matchedBroadcast
+  }
+  return undefined
+}
+
 function getHeaderValue(headers, name)
 {
   var headerEntry = headers.find(h => h.name == name)
-  console.log(headerEntry)
   if (!headerEntry || headerEntry.length == 0) return undefined;
   return headerEntry.value
 }
@@ -119,9 +184,10 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
       responseFilter.onstop = (_) => {
         responseFilter.close()
       }
-      responseFilter.ondata = (ondataEvent) => {
+      responseFilter.ondata = async (ondataEvent) => {
         console.log("ondata")
         console.log(ondataEvent)
+        didWriteData = false
         try {
           let decoder = new TextDecoder("utf-8");
           const rawString = decoder.decode(ondataEvent.data);
@@ -133,45 +199,79 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
           parsedBody = JSON.parse(rawString);
           console.log("parsed")
 
-          console.debug(requestHeaders)
-
           clientId = getHeaderValue(requestHeaders, "Client-Id");
-
-          console.debug(requestHeaders)
-
           authorization = getHeaderValue(requestHeaders, "Authorization");
 
           var subgifts = extractSubgiftEvent(parsedBody);
           console.log(subgifts)
 
-          subgifts.forEach(async subgift => {
+          subgiftUrls = subgifts.map(async subgift => {
             console.log("Fetch past broadcast " + subgift.channelName)
-            console.log(requestHeaders)
             const pastBroadcasts = await fetchPastBroadcasts(clientId, authorization, subgift.channelName)
-            console.log(pastBroadcasts)
+            
+            console.log("Found " + pastBroadcasts[0].data.user.videos.edges.length + " broadcasts")
+            const subgiftBroadcast = getBroadcastForTimestamp(pastBroadcasts, subgift.timeStamp)
+            var subgiftUrl = subgift.channelUrl
+            if (subgiftBroadcast)
+            {
+              const secondsInStream = (new Date(subgift.timeStamp) - subgiftBroadcast.start) / 1000;
+              subgiftUrl = "https://www.twitch.tv/videos/" + subgiftBroadcast.id + "?t=" + formatDurationForVideoUrl(secondsInStream);
+            }
+
+            return {
+              notificationId: subgift.id,
+              channelId: subgift.channelId,
+              channelName: subgift.channelName,
+              subgiftTime: subgift.timeStamp,
+              url: subgiftUrl,
+              description: subgift.body
+            }
           })
 
-          // Build a lightweight payload that we’ll forward
-          const payload = {
-            tabId: details.tabId,
-            url: details.url,
-            method: details.method,
-            headers: details.requestHeaders || [],
-            body: parsedBody,
-            requestId: details.requestId,
-            timeStamp: details.timeStamp
-          };
+          if (subgifts.length === 0)
+          {
+            return;
+          }
 
-          // Send it to the content script that owns the tab
-          browser.tabs.sendMessage(details.tabId, {type: "REQUEST_FULFILLED", payload})
-            .catch(err => {
-              // The tab might not have a content script yet, or it might have been closed.
-              console.warn("Could not forward request to content script:", err);
+          // replaceUrlsInSubgiftEvents(parsedBody, subgiftUrls)
+          // let encoder = new TextEncoder("utf-8");
+          // const encodedStr = encoder.encode(JSON.stringify(parsedBody));
+          // responseFilter.write(encodedStr);
+          // didWriteData = true;
+          Promise.all(subgiftUrls).then(resolvedSubgifts => {
+            console.log(resolvedSubgifts)
+            
+            resolvedSubgifts.forEach(subgift => {
+              if (AllResolvedSubgifts.find(s => s.notificationId == subgift.notificationId)) return;
+
+              AllResolvedSubgifts.push(subgift)
             });
+
+            // Build a lightweight payload that we’ll forward
+            const payload = {
+              tabId: details.tabId,
+              url: details.url,
+              method: details.method,
+              headers: details.requestHeaders || [],
+              body: resolvedSubgifts,
+              requestId: details.requestId,
+              timeStamp: details.timeStamp
+            };
+
+            // Send it to the content script that owns the tab
+            browser.tabs.sendMessage(details.tabId, {type: "REQUEST_FULFILLED", payload})
+              .catch(err => {
+                // The tab might not have a content script yet, or it might have been closed.
+                console.warn("Could not forward request to content script:", err);
+              });
+          })
         } catch(ex) {
           console.error(ex)
         } finally {
-          responseFilter.write(ondataEvent.data);
+          if (!didWriteData)
+          {
+            responseFilter.write(ondataEvent.data);
+          }
         }
       };
     }
@@ -191,3 +291,24 @@ browser.webRequest.onSendHeaders.addListener(async (details) =>
   filter,
   ["requestHeaders"]  // we want the body and headers
 );
+
+browser.runtime.onMessage.addListener(async (msg) => {
+  console.log(msg)
+  if(msg == "getPopupContent")
+  {
+    console.log(AllResolvedSubgifts)
+    return AllResolvedSubgifts
+  }
+
+  // Build a lightweight payload that we’ll forward
+  const payload = {
+    body: AllResolvedSubgifts
+  };
+
+  // Send it to the content script that owns the tab
+  browser.tabs.sendMessage(tab.id, {type: "REQUEST_FULFILLED", payload})
+    .catch(err => {
+      // The tab might not have a content script yet, or it might have been closed.
+      console.warn("Could not forward request to content script:", err);
+    });
+});
