@@ -56,16 +56,23 @@ async function refreshSubgifts()
     })
 }
 
-function clearRefreshing()
+function clearSubgifts()
 {
     listContainer = document.getElementById("subgifts");
-    listContainer.innerHTML = ""
+    while (listContainer.firstChild) {
+        listContainer.removeChild(listContainer.firstChild);
+    }
+    return listContainer
+}
+
+function clearRefreshing()
+{
+    clearSubgifts();
 }
 
 function clearAndCreateRefreshing()
 {
-    listContainer = document.getElementById("subgifts");
-    listContainer.innerHTML = ""
+    listContainer = clearSubgifts()
     listItemTemplate = document.querySelector('#subgift-item-refreshing')
     let li = listItemTemplate.content.cloneNode(true).querySelector(".subgift-item");
     listContainer.appendChild(li);
@@ -73,8 +80,7 @@ function clearAndCreateRefreshing()
 
 function clearAndCreatePlaceholder()
 {
-    listContainer = document.getElementById("subgifts");
-    listContainer.innerHTML = ""
+    listContainer = clearSubgifts() 
     listItemTemplate = document.querySelector('#subgift-item-empty')
     let li = listItemTemplate.content.cloneNode(true).querySelector(".subgift-item");
     listContainer.appendChild(li);
@@ -99,7 +105,7 @@ function createSubgiftElementIfNotExist(subgift)
 
     let li = listItemTemplate.content.cloneNode(true).querySelector(".subgift-item");
     let description = li.querySelector(".description");
-    description.innerHTML = subgift.description;
+    description.innerText = subgift.description;
     let link = li.querySelector("a");
     if (link)
     {
