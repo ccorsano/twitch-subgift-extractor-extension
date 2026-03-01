@@ -42,8 +42,6 @@ function formatDurationForVideoUrl(seconds)
 
 function extractSubgiftEvent(parsedBody)
 {
-  console.log("extractSubgiftEvent")
-  console.warn(parsedBody)
   return parsedBody.map(gdlItem => {
     edges = gdlItem.data?.currentUser?.notifications?.edges
 
@@ -82,13 +80,10 @@ function replaceUrlsInSubgiftEvents(eventsData, subgiftsUrls)
 
     filteredEdges.forEach(notification => {
       subgiftUrl = subgiftsUrls.find(s => s.id == notification.id)
-      console.log(notification)
-      console.log(subgiftUrl)
+
       if(!subgiftUrl) return;
 
       notification.node.actions[0].url = subgiftUrl.url
-
-      console.log(notification)
     })
   });
 }
@@ -185,25 +180,20 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
         responseFilter.close()
       }
       responseFilter.ondata = async (ondataEvent) => {
-        console.log("ondata")
-        console.log(ondataEvent)
         didWriteData = false
         try {
           let decoder = new TextDecoder("utf-8");
           const rawString = decoder.decode(ondataEvent.data);
-          console.log("decoded")
 
           requestHeaders = pendingRequests[details.requestId].headers;
 
           console.debug(rawString)
           parsedBody = JSON.parse(rawString);
-          console.log("parsed")
 
           clientId = getHeaderValue(requestHeaders, "Client-Id");
           authorization = getHeaderValue(requestHeaders, "Authorization");
 
           var subgifts = extractSubgiftEvent(parsedBody);
-          console.log(subgifts)
 
           subgiftUrls = subgifts.map(async subgift => {
             console.log("Fetch past broadcast " + subgift.channelName)
@@ -239,8 +229,6 @@ browser.webRequest.onBeforeRequest.addListener(async (details) => {
           // responseFilter.write(encodedStr);
           // didWriteData = true;
           Promise.all(subgiftUrls).then(resolvedSubgifts => {
-            console.log(resolvedSubgifts)
-            
             resolvedSubgifts.forEach(subgift => {
               if (AllResolvedSubgifts.find(s => s.notificationId == subgift.notificationId)) return;
 
@@ -284,7 +272,6 @@ browser.webRequest.onSendHeaders.addListener(async (details) =>
   {
     if (pendingRequests[details.requestId])
     {
-      console.log("Retrieved headers for " + details.requestId)
       pendingRequests[details.requestId].headers = details.requestHeaders
     }
   },
@@ -293,10 +280,8 @@ browser.webRequest.onSendHeaders.addListener(async (details) =>
 );
 
 browser.runtime.onMessage.addListener(async (msg) => {
-  console.log(msg)
   if(msg == "getPopupContent")
   {
-    console.log(AllResolvedSubgifts)
     return AllResolvedSubgifts
   }
 

@@ -1,5 +1,22 @@
 console.log("Loaded script for popup")
 
+async function refreshSubgifts()
+{
+    const subgifts = await browser.runtime.sendMessage("getPopupContent");
+
+    if (!subgifts)
+    {
+        console.error("Empty subgifts")
+        return;
+    }
+
+    listContainer = document.getElementById("subgifts");
+    listContainer.innerHTML = ""
+    subgifts.forEach(subgift => {
+        createSubgiftElementIfNotExist(subgift)
+    })
+}
+
 function createSubgiftElementIfNotExist(subgift)
 {
     listContainer = document.getElementById("subgifts");
@@ -21,7 +38,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("RECEIVED EVENT ON PAGE ACTION");
     if (message.type === "REQUEST_FULFILLED") {
         const data = message.payload;
-        console.log("Body:", data.body);
 
         data.body.forEach(subgift => {
             createSubgiftElementIfNotExist(subgift)
@@ -30,19 +46,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 window.addEventListener("load", async (_) =>{
-    const subgifts = await browser.runtime.sendMessage("getPopupContent");
-
-    if (!subgifts)
-    {
-        console.error("Empty subgifts")
-        return;
-    }
-
-    listContainer = document.getElementById("subgifts");
-    listContainer.innerHTML = ""
-    subgifts.forEach(subgift => {
-        createSubgiftElementIfNotExist(subgift)
-    })
+    refreshSubgifts()
 })
 
 console.log("Registered listener")
