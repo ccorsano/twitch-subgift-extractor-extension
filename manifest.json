@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "twitch-subgift-extractor",
     "description": "Get a link to the moment you were subgifted",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "icons": {
         "64": "icons/icon.png"
     },
