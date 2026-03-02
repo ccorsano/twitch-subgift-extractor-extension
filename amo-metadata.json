@@ -1,0 +1,21 @@
+{
+    "slug": "twitch-subgift-linker",
+    "name": {
+        "en-US": "Twitch Subgift Linker"
+    },
+    "summary": {
+        "en-US": "Get a link to the moment you were subgifted."
+    },
+    "description": {
+        "en-US": "Do you sometime get a Twitch subgift while you are not watching the channel ?\nDo you wonder how it happened and how the streamer reacted ?\nThis extension allows you to jump to the exact moment it happened.\nUsage:\n- On Twitch, open the notification window\n- Scroll down until you see the subgift notification\n- Click on the action button in the address bar\n- If the broadcast replay is available, you will be able to click and jump to the exact timecode of the subgift"
+    },
+    "categories": [
+        "other"
+    ],
+    "version": {
+        "license": "MIT"
+    },
+    "tags": [
+        "twitch"
+    ]
+}

@@ -2,16 +2,23 @@
     "manifest_version": 3,
     "name": "twitch-subgift-extractor",
     "description": "Get a link to the moment you were subgifted",
-    "version": "0.0.3",
+    "homepage_url": "https://github.com/ccorsano/twitch-subgift-extractor-extension",
+    "version": "0.0.4",
     "icons": {
         "64": "icons/icon.png"
     },
+    "developer": {
+        "name": "Christian Corsano",
+        "url": "https://conceptoire.com"
+    },
+    "license": "MIT",
     "browser_specific_settings": {
         "gecko": {
             "id": "@twitch-subgift-extractor",
-            "strict-min-version": "58.0",
             "data_collection_permissions": {
-                "required": ["none"]
+                "required": [
+                    "none"
+                ]
             }
         }
     },
@@ -21,7 +28,9 @@
         ]
     },
     "permissions": [
-        "webRequest", "webRequestBlocking", "webRequestFilterResponse"
+        "webRequest",
+        "webRequestBlocking",
+        "webRequestFilterResponse"
     ],
     "host_permissions": [
         "https://gql.twitch.tv/gql"
@@ -44,7 +53,7 @@
         "default_popup": "pageAction/index.html",
         "default_title": "twitch-subgift-extractor",
         "show_matches": [
-            "https://*.twitch.tv/*", 
+            "https://*.twitch.tv/*",
             "https://*.twitch.tv/"
         ]
     }
